@@ -1,0 +1,38 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build: all (Makefile)",
+            "type": "shell",
+            "command": "make all",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "run (Makefile)",
+            "type": "shell",
+            "command": "make run",
+            "group": "test",
+            "presentation": {
+                "reveal": "always"
+            },
+            "dependsOn": "build: all (Makefile)" // Garante que a compilação ocorra primeiro
+        },
+        {
+            "label": "clean (Makefile)",
+            "type": "shell",
+            "command": "make clean",
+            "group": "build",
+            "presentation": {
+                "reveal": "always"
+            }
+        }
+    ]
+}

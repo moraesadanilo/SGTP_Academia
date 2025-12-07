@@ -84,31 +84,3 @@ void Ficha::atualizarProximoId(int maiorId) {
     }   
 }
 
-
-
-
-
-
-
-
-/*
-// Salvar no arquivo
-void Ficha::salvarEmArquivo() const {
-    
-    ofstream arquivo("fichas.txt");                 
-    if (!arquivo.is_open()) {                                       //Verifica se abriu corretamente
-        std::cerr << "Erro ao abrir arquivo de fichas.\n";
-        return;
-    }
-
-    for (const auto& f : registros) {                  //percorre o container, e de cada registro undividual "r" extrai os dados. 
-        arquivo << f.dataHora << ";"                  // Escrever dados separados por (`;`).            
-                << f.idFicha << ";"
-                << f.nomeFicha << ";"
-                << f.tempoTotal << ";"
-                << f.caloriasTotal << endl;         //encerra a linha de dados no arquivo.
-    }
-    //Todos os campos são separados por ponto e vírgula (`;`)
-*/
-
-

@@ -23,6 +23,10 @@ public:
     // Gerenciamento de Dados
     void carregarDados();
     void salvarDados();
+    void salvarExercicios();
+    void salvarFichas();
+    void carregarFichas();
+    void carregarExercicios();
 
     // Funcionalidades de Exercícios
     void cadastrarExercicio();

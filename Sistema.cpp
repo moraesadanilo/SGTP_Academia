@@ -27,40 +27,17 @@ Sistema::~Sistema() {
 
 // Carregar dados dos arquivos
 void Sistema::carregarDados() {
-    // Carregar exercicios.txt
-    // Carregar fichas.txt
+    carregarExercicios();       // Carregar exercicios.txt
+    carregarFichas();           // Carregar fichas.txt
     historico.carregarDeArquivo();
 }
 
 // Salvar dados nos arquivos
 void Sistema::salvarDados() {
-    // Salvar exercicios.txt
-    // Salvar fichas.txt
+    salvarExercicios(); // Salvar exercicios.txt
+    salvarFichas();     //Salvar ficha.txt
     
-
-
-
-
-
-    /*
-    //  SALVAR FICHAS.TXT
-    ofstream arquivoficha("ficha.txt");                 
-    if (!arquivoficha.is_open()) {                                       //Verifica se abriu corretamente
-        std::cerr << "Erro ao abrir arquivo de historico.\n";
-        return;
-    }
-
-    for (const auto& f : fichas) {                  //percorre o container, e de cada ficha undividual e extrai os dados. 
-        arquivoficha << f.getId() << ";"                            
-                     << f.getNome() << endl;
-        //Todos os campos são separados por ponto e vírgula (`;`)      
-    }
-    */
-
-
-
-    
-    //  SALVAR HISTORICO.TXT CHAMANDO METODO DA CLASSE
+    //  SALVAR HISTORICO.TXT CHAMANDO METODO DA CLASSE 
     historico.salvarEmArquivo();
 }
 
@@ -230,11 +207,174 @@ void Sistema::registrarTreino() {
     pausar();
 }
 
-
 // Exibir histórico de treinos
 void Sistema::exibirHistorico() {
     
     historico.exibirHistorico();
     pausar();
 
+}
+
+// salvar exercícios em txt
+void Sistema::salvarExercicios() {
+    ofstream arquivo("exercicios.txt");
+    if (!arquivo.is_open()) {
+        std::cerr << "Erro ao abrir arquivo de exercicios para salvar.\n";
+        return;
+    }
+
+    for (const auto& e : exercicios) {
+        // Campos Comuns: ID;TIPO;NOME;ATIVO;
+        arquivo << e->getId() << ";"
+                << e->getTipo() << ";"
+                << e->getNome() << ";"
+                << (e->isAtivo() ? "1" : "0") << ";";
+
+        if (e->getTipo() == 2) {                        // Forca
+            Forca* f = dynamic_cast<Forca*>(e);
+            arquivo << f->getCarga() << ";"
+                    << f->getSeries() << ";"
+                    << f->getRepeticoes() << ";"
+                    << f->getTempoDescanso() << endl;
+        } else if (e->getTipo() == 1) {                 // Cardio
+            Cardio* c = dynamic_cast<Cardio*>(e);
+            arquivo << c->getDuracao() << ";"
+                    << c->getCaloriasPorMinuto() << endl;
+        }
+    }
+}
+
+// Salvar fichas em txt
+void Sistema::salvarFichas() {
+    ofstream arquivo("fichas.txt");
+    if (!arquivo.is_open()) {
+        std::cerr << "Erro ao abrir arquivo de fichas para salvar.\n";
+        return;
+    }
+
+    for (const auto& f : fichas) {
+        // Campos Base: ID_FICHA;NOME_FICHA;
+        arquivo << f->getId() << ";"
+                << f->getNome() << ";";
+
+        // Lista de IDs dos exercícios, separados por vírgula
+        const auto& exerciciosFicha = f->getExercicios();
+        for (size_t i = 0; i < exerciciosFicha.size(); ++i) {
+            arquivo << exerciciosFicha[i]->getId();
+            if (i < exerciciosFicha.size() - 1) {
+                arquivo << ","; // Separador de IDs
+            }
+        }
+        arquivo << endl; // Nova linha para a próxima ficha
+    }
+}
+
+// carregar exercícios a partir de arquivo
+void Sistema::carregarExercicios() {
+    ifstream arquivo("exercicios.txt");
+    if (!arquivo.is_open()) return; // Se não existir, apenas retorna
+
+    exercicios.clear(); // Limpa o vetor antes de carregar
+
+    string linha;
+    int maiorId = 0;
+    while (getline(arquivo, linha)) {
+        stringstream ss(linha);
+        string token;
+
+        // Leitura dos campos comuns de Exercicio
+        getline(ss, token, ';');
+        int id = stoi(token);
+
+        getline(ss, token, ';');
+        int tipo = stoi(token); // 1=Cardio, 2=Forca
+
+        string nome;
+        getline(ss, nome, ';');
+
+        getline(ss, token, ';');
+        bool ativo = (token == "1");
+
+        Exercicio* e = nullptr;
+
+        if (tipo == 2) { // Forca
+            double carga;
+            int series, repeticoes, tempoDescanso;
+
+            getline(ss, token, ';'); carga = stod(token);
+            getline(ss, token, ';'); series = stoi(token);
+            getline(ss, token, ';'); repeticoes = stoi(token);
+            getline(ss, token, ';'); tempoDescanso = stoi(token);
+
+            e = new Forca(id, nome, ativo, carga, series, repeticoes, tempoDescanso);
+
+        } else if (tipo == 1) { // Cardio
+            int duracao;
+            double caloriasPorMinuto;
+
+            getline(ss, token, ';'); duracao = stoi(token);
+            getline(ss, token, ';'); caloriasPorMinuto = stod(token);
+
+            e = new Cardio(id, nome, ativo, duracao, caloriasPorMinuto);
+        }
+
+        if (e) {
+            exercicios.push_back(e);
+            if (id > maiorId) maiorId = id;
+        }
+    }
+
+    Exercicio::atualizarProximoId(maiorId);
+}
+
+// Carregar fichas a partir de arquivo 
+void Sistema::carregarFichas() {
+    ifstream arquivo("fichas.txt");
+    if (!arquivo.is_open()) return;             // Verifica se arquivo abriu
+
+    // Limpa o vetor de fichas antes de carregar
+    for (auto* f : fichas) delete f;        
+    fichas.clear();
+
+    string linha;
+    int maiorIdFicha = 0;
+
+    while (getline(arquivo, linha)) {
+        stringstream ss(linha);
+        string token;
+
+        // Leitura da Ficha
+        getline(ss, token, ';');
+        int idFicha = stoi(token);
+
+        string nomeFicha;
+        getline(ss, nomeFicha, ';');
+
+        // Cria a ficha
+        Ficha* f = new Ficha(idFicha, nomeFicha);
+        
+        // Leitura dos IDs dos exercícios
+        string idsExerciciosStr;
+        getline(ss, idsExerciciosStr);      // Lê o resto da linha
+
+        stringstream ssIds(idsExerciciosStr);
+        string idExStr;
+
+        while (getline(ssIds, idExStr, ',')) {
+            if (idExStr.empty()) continue;
+
+            int idEx = stoi(idExStr);
+            Exercicio* ex = buscarExercicioPorId(idEx);
+            
+            // Adiciona o exercício se ele for encontrado
+            if (ex) {
+                f->adicionarExercicio(ex);
+            }
+        }
+
+        fichas.push_back(f);
+        if (idFicha > maiorIdFicha) maiorIdFicha = idFicha;
+    }
+
+    Ficha::atualizarProximoId(maiorIdFicha);
 }
